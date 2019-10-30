@@ -22,7 +22,7 @@
 * `steamID` - The steam 64 id of the target
 
 ### createBuyListing(listing, callback)
-* Used to create a buy listing on bptf.
+* Used to create a buy listing on bptf. and `listing` object.
 * `listing` - An object that contains the details of the item
 	* `item` - Name of the item (based on backpack.tf) ***Required**
 	* `quality` - Quality name (Case sensitive) or quality number ***Defaults to Unique if not set**
@@ -33,6 +33,8 @@
 	* `details` - What you want to say in the listing ***Optional**
 * `callback` - Error
 	* `err` - Error if error occured, null if success
+	* `listing` - An object that contains the details of the item (same as above), null if error
+		* `listingid` - The unique ID of the listing on backpack.tf
 
 ### createBuyListings(listing, callback)
 * Creates multiple listing on bptf.
@@ -45,7 +47,7 @@
 			* `keys` - Amount of keys ***0 if not set**
 			* `metals` - Amount in Refined ***0 if not set**
 		* `details` - What you want to say in the listing ***Optional**
-* `callback` - Error
+* `callback` - Error 
 	* `err` - Error if error occured, null if success
 	
 ### createBuyListingByName(listing, callback)
@@ -57,8 +59,10 @@
 		* `keys` - Amount in keys ***0 if not set**
 		* `metals` - Amount in Refined ***0 if not set**
 	* `details` - What you want to say in the listing ***Optional**
-* `callback` - Error
+* `callback` - Error and `listing` object.
 	* `err` - Error if error occured, null if success
+	* `listing` - An object that contains the details of the item (same as above), null if error
+		* `listingid` - The unique ID of the listing on backpack.tf
 	
 ### createBuyListingsByName(listings, callback)
 * Similar to [createBuyListing](https://github.com/xLeeJYx/node-bptf/wiki/Methods#createbuylistinglisting-callback) but uses `market_hash_name`
@@ -84,8 +88,10 @@
 		* `keys` - Amount of keys ***0 if not set**
 		* `metals` - Amount in Refined ***0 if not set**
 	* `details` - What you want to say in the listing ***Optional**
-* `callback` - Error
+* `callback` - Error and `listing` object.
 	* `err` - Error if error occured, null if success
+	* `listing` - An object that contains the details of the item (same as above), null if error
+		* `listingid` - The unique ID of the listing on backpack.tf
 
 ### createSellListings(listings, callback)
 * Used to create a buy listing on bptf.
@@ -112,8 +118,10 @@
 		* `keys` - Amount in keys ***0 if not set**
 		* `metals` - Amount in Refined ***0 if not set**
 	* `details` - What you want to say in the listing ***Optional**
-** `callback` - Error
+** `callback` - Error and `listing` object.
 	* `err` - Error if error occured, null if success
+	* `listing` - An object that contains the details of the item (same as above), null if error
+		* `listingid` - The unique ID of the listing on backpack.tf
 	
 ### createSellListingsByName(listings, callback)
 * Similar to [createBuyListing](https://github.com/xLeeJYx/node-bptf/wiki/Methods#createselllistinglisting-callback) but uses `market_hash_name`
