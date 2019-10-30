@@ -22,7 +22,7 @@
 * `steamID` - The steam 64 id of the target
 
 ### createBuyListing(listing, callback)
-* Used to create a buy listing on bptf. and `listing` object.
+* Used to create a buy listing on bptf
 * `listing` - An object that contains the details of the item
 	* `item` - Name of the item (based on backpack.tf) ***Required**
 	* `quality` - Quality name (Case sensitive) or quality number ***Defaults to Unique if not set**
