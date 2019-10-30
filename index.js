@@ -33,7 +33,7 @@ bptf.prototype.getAccessToken = function(callback){
 	var self = this
 	
 	request.get('https://backpack.tf/api/aux/token/v1?key=' + self.apiKey, function(err, httpResponse, body){
-		if(err) throw err
+		if(err) callback(err.message)
 		else if(body){
 			var parsed = JSON.parse(body)
 			if(!parsed['token']){
@@ -50,14 +50,14 @@ bptf.prototype.sendHeartbeat = function(callback){
 	var self = this
 	
 	var hb = {
-		automatic: type
+		automatic: "all"
 	}
 	request.post({
 		url: 'https://backpack.tf/api/aux/heartbeat/v1?token=' + self.accessToken,
 		form: hb
 	}, 
 	function(err, httpResponse, body){
-		if(err) throw new Error(err)
+		if(err) callback(err.message)
 		else {
 			var a = JSON.parse(body)
 			if(a['message']){
@@ -106,16 +106,39 @@ bptf.prototype.createBuyListing = function(_listing, callback){
 			url: "https://backpack.tf/api/classifieds/list/v1?token=" + self.accessToken,
 			form: listing
 		}, function(err, httpResponse, body){
-			if(err) callback(err.message)
+			if(err) callback(err.message, null)
 			else if(body){
 				var parsed = JSON.parse(body)
 				if(parsed["message"]){
-					callback(parsed["message"])
+					callback(parsed["message"], null)
 				}else{
 					Object.keys(parsed["listings"]).forEach(function(item){
-						if(parsed["listings"][item].error){
-							callback(enums.createListingError[parsed["listings"][item].error])
-						}
+						request.get({
+							url: "https://backpack.tf/api/classifieds/listings/v1?token=",
+							form: {
+								"token": self.accessToken,
+								"intent": 0,
+								"inactive": 0
+							}
+	
+						},  
+							(err, httpResponse, body) => {
+								if(err) callback(err.message, null)
+								else {
+									var getparsed = JSON.parse(body)
+									if (getparsed["message"]) callback(getparsed["message"], null) // error getting listing id
+									else {
+										getparsed["listings"].forEach((eachListing) => {
+											if (_listing["item"] === item.replace("The", "").trim()) {
+												listing.listingid = eachListing.id
+												callback(enums.createListingError[parsed["listings"][item].error], listing)
+											}
+										})
+									}
+								}
+							}
+						)
+						
 					})
 				}
 			}
@@ -187,11 +210,11 @@ bptf.prototype.createBuyListings = function(_listing, callback){
 
 bptf.prototype.createBuyListingByName = function(_listing, callback){
 	if(typeof _listing !== "object"){
-		callback("Listing MUST be in an Object")
+		callback("Listing MUST be in an Object", null)
 	}else if(_listing["item"] == undefined){
-		callback("Please provide a item's name")
+		callback("Please provide a item's name", null)
 	}else if(_listing["price"] === undefined || (_listing["price"].keys == undefined && _listing["price"].metals == undefined)){
-		callback("Please provide the price of the item")
+		callback("Please provide the price of the item", null)
 	}
 	
 	if(!_listing["craftable"]){
@@ -252,16 +275,40 @@ bptf.prototype.createBuyListingByName = function(_listing, callback){
 			"listings": listing
 		}
 	}, function(err, httpResponse, body){
-		if(err) callback(err.message)
+		if(err) callback(err.message, null)
 		else {
 			var parsed = JSON.parse(body)
 			if(parsed["message"]){
-				callback(parsed["message"])
+				callback(parsed["message"], null)
 			}else{
 				Object.keys(parsed["listings"]).forEach(function(item){
-					if(parsed["listings"][item].error){
-						callback(enums.createListingError[parsed["listings"][item].error])
-					}
+					if (item.trim() === "") return;
+
+					request.get({
+						url: "https://backpack.tf/api/classifieds/listings/v1?token=",
+						form: {
+							"token": self.accessToken,
+							"intent": 0,
+							"inactive": 0
+						}
+
+					},  
+						(err, httpResponse, body) => {
+							if(err) callback(err.message, null)
+							else {
+								var getparsed = JSON.parse(body)
+								if (getparsed["message"]) callback(getparsed["message"], null) // error getting listing id
+								else {
+									getparsed["listings"].forEach((eachListing) => {
+										if (_itemName === item.trim()) {
+											listing.listingid = eachListing.id
+											callback(enums.createListingError[parsed["listings"][item].error], listing)
+										}
+									})
+								}
+							}
+						}
+					)
 				})
 			}
 		}
@@ -366,13 +413,13 @@ bptf.prototype.createBuyListingsByName = function(_listing, callback){
 
 bptf.prototype.createSellListing = function(_listing, callback){
 	if(typeof _listing !== "object"){
-		callback("Listing MUST be in an Object")
+		callback("Listing MUST be in an Object", null)
 	}else if(_listing["item"] == undefined){
-		callback("Please provide a item's name")
+		callback("Please provide a item's name", null)
 	}else if(_listing["price"] === undefined || (_listing["price"].keys == undefined && _listing["price"].metals == undefined)){
-		callback("Please provide the price of the item")
+		callback("Please provide the price of the item", null)
 	}else if(_listing["id"] === undefined){
-		callback("You need an item's assetid to create a sell listing")
+		callback("You need an item's assetid to create a sell listing", null)
 	}else{
 		if(!_listing["craftable"]){
 			_listing["craftable"] = "Craftable"
@@ -399,21 +446,43 @@ bptf.prototype.createSellListing = function(_listing, callback){
 			url: "https://backpack.tf/api/classifieds/list/v1?token=" + self.accessToken,
 			form: listing
 		}, function(err, httpResponse, body){
-			if(err) callback(err.message)
-			else if(body){
+			if(err) callback(err.message, null)
+			else if (body) {
 				var parsed = JSON.parse(body)
 				if(parsed["message"]){
-					callback(parsed["message"])
-				}else{
-					if(parsed["message"]){
-						callback(parsed["message"])
-					}else{
-						Object.keys(parsed["listings"]).forEach(function(item){
-							if(parsed["listings"][item].error){
-								callback(enums.createListingError[parsed["listings"][item].error])
+					callback(parsed["message"], null)
+				} else {
+					Object.keys(parsed["listings"]).forEach(function(item){
+
+						request.get({
+							url: "https://backpack.tf/api/classifieds/listings/v1?token=",
+							form: {
+								"token": self.accessToken,
+								"intent": 1,
+								"inactive": 0
 							}
-						})
-					}
+	
+						},  
+						
+						(err, httpResponse, body) => {
+							console.log("we here bois")
+							if (err) callback(err.message, null)
+							else {
+								var getparsed = JSON.parse(body)
+								if (getparsed["message"]) callback(getparsed["message"], null) // error getting listing id
+								else {
+									getparsed["listings"].forEach((eachListing) => {
+										if (eachListing["item"].id.toString() === item) {
+											listing.listingid = eachListing.id
+											callback(enums.createListingError[parsed["listings"][item].error], listing);
+										}
+									})
+								}
+							}
+						}
+						)
+					})
+					
 				}
 			}
 		})
@@ -484,13 +553,13 @@ bptf.prototype.createSellListings = function(_listing, callback){
 
 bptf.prototype.createSellListingByName = function(_listing, callback){
 	if(typeof _listing !== "object"){
-		callback("Listing MUST be in an Object")
+		callback("Listing MUST be in an Object", null)
 	}else if(_listing["item"] == undefined){
-		callback("Please provide a item's name")
+		callback("Please provide a item's name", null)
 	}else if(_listing["price"] === undefined || (_listing["price"].keys == undefined && _listing["price"].metals == undefined)){
-		callback("Please provide the price of the item")
+		callback("Please provide the price of the item", null)
 	}else if(_listing["id"] === undefined){
-		callback("You need an item's assetid to create a sell listing")
+		callback("You need an item's assetid to create a sell listing", null)
 	}else{
 		if(!_listing["craftable"]){
 			_listing["craftable"] = "Craftable"
@@ -550,20 +619,50 @@ bptf.prototype.createSellListingByName = function(_listing, callback){
 				"listings": listing
 			}
 		}, function(err, httpResponse, body){
-			if(err) callback(err.message)
+			if(err) callback(err.message, null)
 			else {
 				var parsed = JSON.parse(body)
 				if(parsed["message"]){
-					callback(parsed["message"])
+					callback(parsed["message"], null)
 				}else{
 					Object.keys(parsed["listings"]).forEach(function(item){
+						
 						if(parsed["listings"][item].error){
-							callback(enums.createListingError[parsed["listings"][item].error])
+							
+							request.get({
+								url: "https://backpack.tf/api/classifieds/listings/v1?token=",
+								form: {
+									"token": self.accessToken,
+									"intent": 1,
+									"inactive": 0
+								}
+		
+							},  
+								(err, httpResponse, body) => {
+									if(err) callback(err.message, null)
+									else {
+										var getparsed = JSON.parse(body)
+										if (getparsed["message"]) callback(getparsed["message"], null) // error getting listing id
+										else {
+											getparsed["listings"].forEach((eachListing) => {
+												if (eachListing["item"].id.toString() === item) {
+													listing.listingid = eachListing.id
+													callback(enums.createListingError[parsed["listings"][item].error], listing)
+												}
+											})
+										}
+									}
+								}
+							)
+							
 						}
 					})
+					
 				}
 			}
 		})
+
+
 	}
 }
 
