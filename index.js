@@ -63,6 +63,8 @@ bptf.prototype.sendHeartbeat = function(callback){
 			if(a['message']){
 				callback(a['message'])
 			}
+			
+			callback(null)
 		}
 	})
 }
