@@ -62,9 +62,11 @@ bptf.prototype.sendHeartbeat = function(callback){
 			var a = JSON.parse(body)
 			if(a['message']){
 				callback(a['message'])
+			} else {
+				callback(null)
 			}
 			
-			callback(null)
+			
 		}
 	})
 }
